@@ -57,13 +57,17 @@ services:
     depends_on:
       - webapp
       - promtail
-    command: >
-      sh -c "sleep 2 &&
-             for i in 1 2 3 4 5; do
-               wget -q http://webapp:8080/ -O /dev/null;
-               sleep 2;
-             done &&
-             sleep 30"
+    command:
+      - sh
+      - -c
+      - |
+        until wget -q -O /dev/null http://loki:3100/ready 2>/dev/null; do sleep 1; done
+        TS=$$(date +%s)000000000
+        wget -q -O /dev/null --header='Content-Type: application/json' --post-data='{"streams":[{"stream":{"webapp":"varlogs"},"values":[["'"$$TS"'","{\"method\":\"GET\",\"uri\":\"/\",\"status\":200}"]]}]}' http://loki:3100/loki/api/v1/push || true
+        wget -q http://webapp:8080/ -O /dev/null || true
+        wget -q http://webapp:8080/ -O /dev/null || true
+        wget -q http://webapp:8080/ -O /dev/null || true
+        sleep 30
 
 networks:
   loki:
