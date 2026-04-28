@@ -1,8 +1,3 @@
-version: "3.8"
-
-networks:
-  loki:
-
 services:
   webapp:
     build: .
@@ -27,6 +22,11 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     networks:
       - loki
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 -O- http://localhost:3100/ready | grep -q ready"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   promtail:
     image: grafana/promtail:2.9.0
@@ -37,8 +37,8 @@ services:
     networks:
       - loki
     depends_on:
-      - loki
-      - webapp
+      loki:
+        condition: service_healthy
 
   grafana:
     image: grafana/grafana:10.1.0
@@ -53,7 +53,11 @@ services:
     networks:
       - loki
     depends_on:
-      - loki
+      loki:
+        condition: service_healthy
+
+networks:
+  loki:
 
 volumes:
   webapp_logs:
