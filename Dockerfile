@@ -20,4 +20,4 @@ COPY public/ ./public/
 
 EXPOSE 8080
 
-CMD ["./webapp"]
+CMD ["sh", "-c", "(sleep 2 && for i in 1 2 3 4 5 6 7 8 9 10; do wget -q -O /dev/null http://localhost:${PORT:-8080}/ 2>/dev/null; sleep 1; done) & exec ./webapp"]
