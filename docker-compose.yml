@@ -50,6 +50,20 @@ services:
     depends_on:
       - loki
 
+  log-generator:
+    image: alpine:3.18
+    networks:
+      - loki
+    depends_on:
+      - webapp
+      - promtail
+    command: >
+      sh -c "sleep 10 &&
+             wget -q http://webapp:8080/ -O /dev/null &&
+             wget -q http://webapp:8080/ -O /dev/null &&
+             wget -q http://webapp:8080/ -O /dev/null &&
+             sleep 20"
+
 networks:
   loki:
 
