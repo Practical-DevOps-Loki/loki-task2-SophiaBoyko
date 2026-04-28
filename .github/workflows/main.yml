@@ -22,19 +22,6 @@ jobs:
     - uses: actions/checkout@v6
     - name: Build and start containers for a services
       run: docker compose up -d
-    - name: Wait for logs to appear in Loki
-      run: |
-        echo "Waiting for the log pipeline to be ready..."
-        for i in $(seq 1 24); do
-          response=$(curl -s "http://localhost:3100/loki/api/v1/query?query=%7Bwebapp%3D%22varlogs%22%7D" 2>/dev/null || true)
-          if echo "$response" | grep -q '"values"'; then
-            echo "Logs found in Loki!"
-            exit 0
-          fi
-          echo "Attempt $i/24: Waiting for logs to be ingested... (sleeping 5s)"
-          sleep 5
-        done
-        echo "Warning: Timed out waiting for logs after 120s"
     - name: Test containers functionality
       uses: cypress-io/github-action@v6
       env:
