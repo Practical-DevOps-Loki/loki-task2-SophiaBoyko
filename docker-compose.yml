@@ -1,1 +1,61 @@
+version: "3.8"
 
+networks:
+  loki:
+
+services:
+  webapp:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+    volumes:
+      - webapp_logs:/var/log/webapp
+    networks:
+      - loki
+    depends_on:
+      - loki
+
+  loki:
+    image: grafana/loki:2.9.0
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./config/loki-config.yml:/etc/loki/local-config.yaml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - loki
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    volumes:
+      - ./config/promtail-config.yml:/etc/promtail/config.yml
+      - webapp_logs:/var/log/webapp
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - loki
+    depends_on:
+      - loki
+      - webapp
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    ports:
+      - "9090:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      - ./config/grafana-datasource.yml:/etc/grafana/provisioning/datasources/loki.yml
+      - grafana_data:/var/lib/grafana
+    networks:
+      - loki
+    depends_on:
+      - loki
+
+volumes:
+  webapp_logs:
+  loki_data:
+  grafana_data:
